@@ -9,3 +9,20 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
     -   id: detect-private-key
+-   repo: local
+    hooks:
+        - id: tidy-up-modules
+          name: Add missing and remove unused modules
+          pass_filenames: false
+          entry: go mod tidy
+          language: system
+        - id: unit-test
+          name: Run unit tests
+          pass_filenames: false
+          entry: go test -race -vet=off ./...
+          language: system
+        - id: staticcheck
+          name: Run Staticcheck Code
+          pass_filenames: false
+          entry: staticcheck ./...
+          language: golang

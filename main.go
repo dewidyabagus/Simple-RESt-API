@@ -16,17 +16,8 @@ import (
 	"gorm.io/gorm"
 )
 
-const requestTimeout = 30 * time.Second
-
 func main() {
 	config := LoadConfig()
-
-	now := time.Now()
-	now.Add(3 * time.Second)
-
-	if now.After(time.Now()) {
-
-	}
 
 	db, err := gorm.Open(mysql.Open(config.DatabaseDSN), &gorm.Config{})
 	if err != nil {
@@ -78,8 +69,5 @@ func dummySimulation(e *echo.Echo, port string) {
 }
 
 func CheckValue(val uint) bool {
-	if val == 0 {
-		return false
-	}
-	return true
+	return val != 0
 }
