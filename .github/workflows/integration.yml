@@ -1,0 +1,46 @@
+# Understanding The Workflow File
+# https://docs.github.com/en/actions/using-workflows/about-workflows#understanding-the-workflow-file
+
+name: "Continuous Integration (CI)"
+on: ["push", "pull_request"]
+
+jobs:
+  code-analysis:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting
+          fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.18"
+      - name: Run tidy up modules
+        run: go mod tidy
+      - name: Run unit tests
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+      - uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          version: "2022.1.3"
+          install-go: false
+          cache-key: "1.18"
+      - name: Run analysis code and push it to SonarCloud
+        uses: sonarsource/sonarcloud-github-action@v1.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  vulns-scanner:
+    name: Vulnerability Scanner
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/google/osv-scanner:v1.3.3
+      volumes:
+        - ${{ github.workspace }}:/github/workspace
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting
+          fetch-depth: 0
+      - name: Run OSV scanner
+        run: /osv-scanner --lockfile=/github/workspace/go.mod
